@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% block title %}Developer Integrations - DocuOCR{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-6xl mx-auto animate-fade-in">
+  
+  <div>
+    <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 font-sans">API & Developer Console</h1>
+    <p class="text-xs text-slate-400 dark:text-dark-500 mt-1">Integrate automated document parsing workflows with internal ERP, CRM, and cloud services.</p>
+  </div>
+
+  {% if messages %}
+  <div class="space-y-2">
+    {% for message in messages %}
+    <div class="px-4 py-3 text-xs rounded-xl font-medium {% if message.tags == 'error' %}bg-rose-500/10 text-rose-500 border border-rose-500/20{% else %}bg-emerald-500/10 text-emerald-500 border border-emerald-500/20{% endif %}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- API Key & Code Snippets Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Left Column: API Key Details -->
+    <div class="lg:col-span-5 flex flex-col gap-6">
+      <!-- SDK Key Card -->
+      <div class="glass-panel p-6 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm">
+        <h2 class="text-xs font-bold text-slate-400 dark:text-dark-500 uppercase tracking-wider mb-4">Organization API Key</h2>
+        
+        <div class="space-y-4">
+          <p class="text-[11px] text-slate-400">Use this token in the headers of all REST API requests as <code class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-dark-900 font-mono font-bold text-brand-500">X-Organization-API-Key</code>.</p>
+          
+          <div class="flex gap-2">
+            <input type="text" readonly id="api-key-input" value="{{ api_key }}" class="w-full px-3 py-2 text-xs font-mono rounded-xl bg-slate-100 border border-slate-200 dark:bg-dark-900 dark:border-dark-750 text-slate-700 dark:text-slate-300 outline-none">
+            <button onclick="copyAPIKey()" class="px-3.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs font-semibold rounded-xl transition-all shadow-md shadow-brand-500/10 flex items-center justify-center">
+              Copy
+            </button>
+          </div>
+          <span id="copy-toast" class="text-[10px] text-emerald-500 font-semibold block h-3 transition-opacity duration-350 opacity-0">Token copied to clipboard!</span>
+        </div>
+      </div>
+
+      <!-- Add Webhook Card -->
+      {% if user_role_in_workspace == 'admin' %}
+      <div class="glass-panel p-6 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm h-fit">
+        <h2 class="text-xs font-bold text-slate-400 dark:text-dark-500 uppercase tracking-wider mb-4">Register Webhook</h2>
+        <form method="post" class="space-y-4">
+          {% csrf_token %}
+          <input type="hidden" name="add_webhook" value="1">
+          <div>
+            <label for="url" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Endpoint URL</label>
+            <input type="url" name="url" id="url" required placeholder="https://api.yourdomain.com/webhooks" class="w-full px-3 py-2.5 text-xs rounded-xl bg-white/70 border border-slate-200 focus:border-brand-500 focus:outline-none dark:bg-dark-900/60 dark:border-dark-700 dark:focus:border-brand-500 transition-all text-slate-700 dark:text-slate-200">
+          </div>
+
+          <div>
+            <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">Subscribe to Events</span>
+            <div class="space-y-2">
+              <label class="flex items-center gap-2 cursor-pointer text-xs select-none">
+                <input type="checkbox" name="events[]" value="document.processed" checked class="w-3.5 h-3.5 text-brand-500 rounded border-slate-300">
+                <span class="font-medium text-slate-600 dark:text-slate-400">document.processed</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer text-xs select-none">
+                <input type="checkbox" name="events[]" value="document.failed" checked class="w-3.5 h-3.5 text-brand-500 rounded border-slate-300">
+                <span class="font-medium text-slate-600 dark:text-slate-400">document.failed</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer text-xs select-none">
+                <input type="checkbox" name="events[]" value="document.fraud_alert" checked class="w-3.5 h-3.5 text-brand-500 rounded border-slate-300">
+                <span class="font-medium text-slate-600 dark:text-slate-400">document.fraud_alert</span>
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-xs font-semibold text-white rounded-xl transition-all shadow-md shadow-brand-500/10">
+            Register Webhook URL
+          </button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Right Column: Interactive Code Snippets Tabber -->
+    <div class="lg:col-span-7 glass-panel rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm overflow-hidden flex flex-col h-fit">
+      <!-- Tabs switcher -->
+      <div class="h-12 px-6 border-b border-slate-200/50 dark:border-dark-800/50 bg-slate-100/30 dark:bg-dark-900/30 flex items-center justify-between">
+        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">REST API Integration Code</span>
+        
+        <div class="flex gap-2">
+          <button onclick="switchCode('curl')" id="tab-curl" class="code-tab px-2.5 py-1 text-[10px] font-bold rounded-lg border border-slate-200 dark:border-dark-800 bg-white dark:bg-dark-900 hover:border-brand-500 text-brand-500 transition-all border-brand-500">
+            cURL
+          </button>
+          <button onclick="switchCode('python')" id="tab-python" class="code-tab px-2.5 py-1 text-[10px] font-bold rounded-lg border border-slate-200 dark:border-dark-800 bg-white dark:bg-dark-900 hover:border-brand-500 text-slate-500 transition-all">
+            Python
+          </button>
+          <button onclick="switchCode('node')" id="tab-node" class="code-tab px-2.5 py-1 text-[10px] font-bold rounded-lg border border-slate-200 dark:border-dark-800 bg-white dark:bg-dark-900 hover:border-brand-500 text-slate-500 transition-all">
+            Node.js
+          </button>
+        </div>
+      </div>
+
+      <!-- Code blocks -->
+      <div class="p-6 bg-slate-950 text-slate-100 font-mono text-[11px] rounded-b-2xl select-text overflow-x-auto min-h-[160px]">
+        <pre id="code-curl" class="code-block block"><code>{{ snippets.curl }}</code></pre>
+        <pre id="code-python" class="code-block hidden"><code>{{ snippets.python }}</code></pre>
+        <pre id="code-node" class="code-block hidden"><code>{{ snippets.node }}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Webhook endpoints table lists -->
+  <div class="glass-panel p-6 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm">
+    <h2 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">Active Webhooks</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-slate-200/50 dark:border-dark-800/50 text-slate-400 font-semibold uppercase tracking-wider">
+            <th class="pb-3 font-semibold">Endpoint Target</th>
+            <th class="pb-3 font-semibold">Secret Key</th>
+            <th class="pb-3 font-semibold">Events Subscribed</th>
+            <th class="pb-3 font-semibold text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-dark-800/30">
+          {% for ep in endpoints %}
+          <tr class="text-slate-700 dark:text-slate-300">
+            <td class="py-3.5 font-bold truncate max-w-sm" title="{{ ep.url }}">{{ ep.url }}</td>
+            <td class="py-3.5 font-mono text-[10px] text-slate-400">{{ ep.secret }}</td>
+            <td class="py-3.5">
+              <div class="flex gap-1">
+                {% for ev in ep.events %}
+                <span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-slate-100 dark:bg-dark-900 border border-slate-200/30 dark:border-dark-800/30 text-slate-500 uppercase tracking-wide">{{ ev|slice:"9:" }}</span>
+                {% endfor %}
+              </div>
+            </td>
+            <td class="py-3.5 text-right">
+              {% if user_role_in_workspace == 'admin' %}
+              <a href="{% url 'api:delete_webhook' ep.id %}" onclick="return confirm('Are you sure you want to delete this webhook?')" class="px-2.5 py-1 text-[10px] text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all font-bold">Delete</a>
+              {% else %}
+              <span class="text-slate-400 text-[10px]">-</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="py-6 text-center text-slate-400">No webhooks registered. Create one above to receive push alerts.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Delivery logs -->
+  <div class="glass-panel p-6 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm">
+    <h2 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">Webhook Delivery Logs</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-slate-200/50 dark:border-dark-800/50 text-slate-400 font-semibold uppercase tracking-wider">
+            <th class="pb-3 font-semibold">Sent At</th>
+            <th class="pb-3 font-semibold">Endpoint</th>
+            <th class="pb-3 font-semibold">Event</th>
+            <th class="pb-3 font-semibold">Response Code</th>
+            <th class="pb-3 font-semibold text-right">Logs Body</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-dark-800/30">
+          {% for log in delivery_logs %}
+          <tr class="text-slate-700 dark:text-slate-300">
+            <td class="py-3.5 text-slate-400">{{ log.sent_at|date:"Y-m-d H:i:s" }}</td>
+            <td class="py-3.5 font-medium truncate max-w-xs">{{ log.endpoint.url }}</td>
+            <td class="py-3.5 uppercase font-bold text-[9px] tracking-wide text-slate-500">{{ log.event_type }}</td>
+            <td class="py-3.5 font-bold">
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold 
+                {% if log.status_code < 300 %}bg-emerald-500/10 text-emerald-500
+                {% else %}bg-rose-500/10 text-rose-500{% endif %}">
+                {{ log.status_code }}
+              </span>
+            </td>
+            <td class="py-3.5 text-right font-mono text-[9px] text-slate-400 truncate max-w-xs" title="{{ log.response_body }}">{{ log.response_body|slice:":50" }}...</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="py-6 text-center text-slate-400">No delivery logs recorded yet. Logs will populate as API webhooks trigger.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Clipboard copy
+  function copyAPIKey() {
+    const input = document.getElementById('api-key-input');
+    input.select();
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value);
+    
+    // Toast notification
+    const toast = document.getElementById('copy-toast');
+    toast.style.opacity = '1';
+    setTimeout(() => toast.style.opacity = '0', 2500);
+  }
+
+  // Snippets switcher tabs
+  function switchCode(codeKey) {
+    // Hide all code blocks
+    document.querySelectorAll('.code-block').forEach(el => el.classList.add('hidden'));
+    // Show active code block
+    document.getElementById(`code-${codeKey}`).classList.remove('hidden');
+
+    // Update active tab styling
+    document.querySelectorAll('.code-tab').forEach(el => {
+      el.classList.remove('border-brand-500', 'text-brand-500');
+      el.classList.add('text-slate-500');
+    });
+    document.getElementById(`tab-${codeKey}`).classList.add('border-brand-500', 'text-brand-500');
+    document.getElementById(`tab-${codeKey}`).classList.remove('text-slate-500');
+  }
+</script>
+{% endblock %}

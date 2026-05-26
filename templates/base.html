@@ -1,0 +1,225 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}DocuOCR - Intelligent Document Extraction{% endblock %}</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Compiled Styles -->
+  <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+  <script>
+    // Theme initialization script to prevent flashing
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full bg-slate-50 text-slate-800 dark:bg-dark-950 dark:text-slate-100 font-sans flex flex-col transition-colors duration-200">
+  
+  <!-- Mobile Sidebar Overlay -->
+  <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden lg:hidden" onclick="toggleMobileSidebar()"></div>
+
+  <div class="flex h-full overflow-hidden">
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 flex flex-col w-64 glass-panel border-r border-slate-200/50 dark:border-dark-800/50 transition-all duration-300 transform -translate-x-full lg:translate-x-0 lg:static lg:h-full">
+      <!-- Logo Header -->
+      <div class="flex items-center justify-between h-16 px-6 border-b border-slate-200/50 dark:border-dark-800/50">
+        <a href="{% url 'core:dashboard' %}" class="flex items-center gap-2">
+          <span class="text-2xl font-extrabold bg-gradient-to-r from-brand-500 to-accent-violet bg-clip-text text-transparent">DocuOCR</span>
+          <span class="px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-white bg-brand-500 rounded uppercase">B2B</span>
+        </a>
+        <button class="p-1 rounded lg:hidden text-slate-500 hover:bg-slate-100 dark:hover:bg-dark-800" onclick="toggleMobileSidebar()">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Tenant Context Details -->
+      {% if active_tenant %}
+      <div class="px-6 py-3 border-b border-slate-200/20 dark:border-dark-800/20 bg-slate-100/30 dark:bg-dark-900/20">
+        <div class="text-[10px] font-bold text-slate-400 dark:text-dark-500 uppercase tracking-wider">Active Account</div>
+        <div class="font-bold text-slate-700 dark:text-slate-200 truncate">{{ active_tenant.name }}</div>
+      </div>
+      {% endif %}
+
+      <!-- Navigation Links -->
+      <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+        <a href="{% url 'core:dashboard' %}" class="flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-sm transition-all {% if request.resolver_match.url_name == 'dashboard' %}bg-brand-500/10 text-brand-600 dark:text-brand-400{% else %}text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-dark-900/50{% endif %}">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Workspaces
+        </a>
+        
+        <a href="{% url 'documents:workflow_list' %}" class="flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-sm transition-all {% if 'workflow' in request.path %}bg-brand-500/10 text-brand-600 dark:text-brand-400{% else %}text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-dark-900/50{% endif %}">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          AI Workflows
+        </a>
+
+        <a href="{% url 'api:integration_guide' %}" class="flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-sm transition-all {% if 'integration' in request.path %}bg-brand-500/10 text-brand-600 dark:text-brand-400{% else %}text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-dark-900/50{% endif %}">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+          API Integrations
+        </a>
+
+        <a href="{% url 'analytics:dashboard' %}" class="flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-sm transition-all {% if 'analytics' in request.path %}bg-brand-500/10 text-brand-600 dark:text-brand-400{% else %}text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-dark-900/50{% endif %}">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2"/></svg>
+          Analytics & Reports
+        </a>
+
+        <a href="{% url 'core:team_settings' %}" class="flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-sm transition-all {% if 'team' in request.path %}bg-brand-500/10 text-brand-600 dark:text-brand-400{% else %}text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-dark-900/50{% endif %}">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          Team & Members
+        </a>
+      </nav>
+
+      <!-- User footer area -->
+      <div class="p-4 border-t border-slate-200/50 dark:border-dark-800/50 bg-slate-100/10 dark:bg-dark-950/20">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center font-bold text-white text-sm uppercase">
+            {{ request.user.username|slice:":2" }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">{{ request.user.username }}</div>
+            <div class="text-[10px] text-slate-400 dark:text-dark-500 capitalize">{{ user_role_in_workspace|default:request.user.role }}</div>
+          </div>
+        </div>
+        <form action="{% url 'core:logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all font-semibold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            Sign Out
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col overflow-hidden relative">
+      <!-- Top navbar -->
+      <header class="h-16 px-6 glass-panel border-b border-slate-200/50 dark:border-dark-800/50 flex items-center justify-between z-30">
+        <div class="flex items-center gap-4">
+          <button class="p-1.5 rounded lg:hidden text-slate-500 hover:bg-slate-100 dark:hover:bg-dark-800" onclick="toggleMobileSidebar()">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          
+          <!-- Workspace Switcher Selector -->
+          {% if request.user.is_authenticated %}
+          <div class="relative">
+            <button onclick="toggleWorkspaceMenu()" class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-lg hover:bg-slate-50 dark:hover:bg-dark-750 transition-all">
+              <span class="w-2.5 h-2.5 rounded-full bg-accent-emerald"></span>
+              <span>Workspace: {{ active_workspace.name }}</span>
+              <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <!-- Workspace Switcher Dropdown -->
+            <div id="workspace-dropdown" class="absolute left-0 mt-2 w-56 rounded-xl bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 shadow-lg hidden z-50">
+              <div class="p-2 border-b border-slate-100 dark:border-dark-700">
+                <span class="text-[10px] font-bold text-slate-400 dark:text-dark-500 uppercase tracking-wider px-2">Switch Workspace</span>
+              </div>
+              <div class="p-1 max-h-48 overflow-y-auto">
+                {% for ws in user_workspaces %}
+                <form action="{% url 'core:switch_workspace' ws.id %}" method="post">
+                  {% csrf_token %}
+                  <button type="submit" class="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-900 rounded-lg flex items-center justify-between transition-all">
+                    <span>{{ ws.name }}</span>
+                    {% if ws.id == active_workspace.id %}
+                    <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    {% endif %}
+                  </button>
+                </form>
+                {% endfor %}
+              </div>
+              <div class="p-1.5 border-t border-slate-100 dark:border-dark-700">
+                <a href="{% url 'core:create_workspace' %}" class="flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold text-brand-500 hover:bg-brand-500/10 rounded-lg transition-all">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                  Create New Workspace
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="flex items-center gap-4">
+          <!-- Global Search Shortcut Bar -->
+          <form action="{% url 'analytics:search' %}" method="get" class="relative hidden sm:block">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </span>
+            <input type="text" name="q" placeholder="Global search OCR text..." class="pl-9 pr-4 py-1.5 w-60 text-xs rounded-xl bg-slate-100/70 border border-transparent focus:bg-white focus:border-brand-500 focus:outline-none dark:bg-dark-900/60 dark:focus:bg-dark-800 transition-all text-slate-700 dark:text-slate-200">
+          </form>
+
+          <!-- Light/Dark Mode Switcher -->
+          <button id="theme-toggle" class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-dark-800 transition-all">
+            <!-- Sun Icon (shows in dark mode) -->
+            <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+            <!-- Moon Icon (shows in light mode) -->
+            <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Body Inner Content -->
+      <main class="flex-1 overflow-y-auto p-6 md:p-8">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Theme switching logic
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+    const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+
+    // Show initial icon based on theme
+    function updateThemeIcons() {
+      if (document.documentElement.classList.contains('dark')) {
+        themeToggleLightIcon.classList.remove('hidden');
+        themeToggleDarkIcon.classList.add('hidden');
+      } else {
+        themeToggleLightIcon.classList.add('hidden');
+        themeToggleDarkIcon.classList.remove('hidden');
+      }
+    }
+    updateThemeIcons();
+
+    themeToggleBtn.addEventListener('click', function() {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+      updateThemeIcons();
+    });
+
+    // Workspace dropdown toggle
+    function toggleWorkspaceMenu() {
+      const dropdown = document.getElementById('workspace-dropdown');
+      if(dropdown) dropdown.classList.toggle('hidden');
+    }
+
+    // Close workspace switcher when clicking outside
+    window.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('workspace-dropdown');
+      if (dropdown && !e.target.closest('#workspace-dropdown') && !e.target.closest('button[onclick="toggleWorkspaceMenu()"]')) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    // Mobile sidebar responsiveness
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('mobile-sidebar-overlay');
+      sidebar.classList.toggle('-translate-x-full');
+      overlay.classList.toggle('hidden');
+    }
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

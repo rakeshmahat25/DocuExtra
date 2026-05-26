@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B2B SaaS Onboarding - DocuOCR</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+  <script>
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
+</head>
+<body class="h-full bg-slate-100 text-slate-800 dark:bg-dark-950 dark:text-slate-100 flex items-center justify-center font-sans p-6 transition-colors duration-200">
+  
+  <div class="absolute inset-0 bg-gradient-to-tr from-brand-600/10 via-transparent to-accent-violet/10 pointer-events-none"></div>
+
+  <div class="w-full max-w-lg glass-panel p-8 rounded-2xl shadow-2xl relative border border-slate-200/50 dark:border-dark-800/50">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-extrabold bg-gradient-to-r from-brand-500 to-accent-violet bg-clip-text text-transparent mb-2">Create B2B Tenant</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Initialize workspace & set up custom document extractions</p>
+    </div>
+
+    {% if messages %}
+    <div class="mb-6 space-y-2">
+      {% for message in messages %}
+      <div class="px-4 py-3 text-xs rounded-xl font-medium {% if message.tags == 'error' %}bg-rose-500/10 text-rose-500 border border-rose-500/20{% else %}bg-emerald-500/10 text-emerald-500 border border-emerald-500/20{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'core:signup' %}" class="space-y-4">
+      {% csrf_token %}
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="company_name" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Company / Org Name</label>
+          <input type="text" name="company_name" id="company_name" required placeholder="Acme Logistics" oninput="suggestSubdomain(this.value)" class="w-full px-4 py-2.5 text-sm rounded-xl bg-white/70 border border-slate-200 focus:border-brand-500 focus:outline-none dark:bg-dark-900/60 dark:border-dark-700 dark:focus:border-brand-500 transition-all text-slate-700 dark:text-slate-200">
+        </div>
+
+        <div>
+          <label for="subdomain" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Subdomain URL</label>
+          <div class="flex items-center">
+            <input type="text" name="subdomain" id="subdomain" required placeholder="acme-logistics" class="w-full px-4 py-2.5 text-sm rounded-xl bg-white/70 border border-slate-200 focus:border-brand-500 focus:outline-none dark:bg-dark-900/60 dark:border-dark-700 dark:focus:border-brand-500 transition-all text-slate-700 dark:text-slate-200">
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-slate-200/40 dark:border-dark-800/40 my-4 pt-4">
+        <h3 class="text-xs font-bold text-slate-400 dark:text-dark-500 uppercase tracking-wider mb-3">Administrator Credentials</h3>
+        
+        <div class="space-y-4">
+          <div>
+            <label for="username" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Admin Username</label>
+            <input type="text" name="username" id="username" required placeholder="john_doe" class="w-full px-4 py-2.5 text-sm rounded-xl bg-white/70 border border-slate-200 focus:border-brand-500 focus:outline-none dark:bg-dark-900/60 dark:border-dark-700 dark:focus:border-brand-500 transition-all text-slate-700 dark:text-slate-200">
+          </div>
+
+          <div>
+            <label for="email" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Admin Email</label>
+            <input type="email" name="email" id="email" required placeholder="john@acme.com" class="w-full px-4 py-2.5 text-sm rounded-xl bg-white/70 border border-slate-200 focus:border-brand-500 focus:outline-none dark:bg-dark-900/60 dark:border-dark-700 dark:focus:border-brand-500 transition-all text-slate-700 dark:text-slate-200">
+          </div>
+
+          <div>
+            <label for="password" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Password</label>
+            <input type="password" name="password" id="password" required placeholder="••••••••" class="w-full px-4 py-2.5 text-sm rounded-xl bg-white/70 border border-slate-200 focus:border-brand-500 focus:outline-none dark:bg-dark-900/60 dark:border-dark-700 dark:focus:border-brand-500 transition-all text-slate-700 dark:text-slate-200">
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="w-full py-3.5 px-4 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 active:scale-95 text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-brand-500/20 mt-4">
+        Onboard Organization
+      </button>
+    </form>
+
+    <div class="mt-6 text-center border-t border-slate-200/50 dark:border-dark-800/50 pt-5">
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        Already registered? 
+        <a href="{% url 'core:login' %}" class="font-bold text-brand-500 hover:text-brand-600 transition-all ml-1">Sign In</a>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    function suggestSubdomain(val) {
+      const subdomainInput = document.getElementById('subdomain');
+      const suggested = val.toLowerCase()
+                           .replace(/[^a-z0-9\s-]/g, '') // remove special chars
+                           .replace(/\s+/g, '-')         // replace spaces with hyphens
+                           .slice(0, 30);                // limit length
+      subdomainInput.value = suggested;
+    }
+  </script>
+</body>
+</html>

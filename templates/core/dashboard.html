@@ -1,0 +1,455 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - DocuOCR{% endblock %}
+
+{% block content %}
+<div class="space-y-8 animate-fade-in">
+  
+  <!-- Stats Section -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+    <!-- Stat Card 1: Total -->
+    <div class="glass-panel p-5 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm flex items-center gap-4">
+      <div class="p-3 bg-brand-500/10 text-brand-500 rounded-xl">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+      <div>
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Documents</div>
+        <div id="stat-total" class="text-xl font-bold text-slate-700 dark:text-slate-200 mt-0.5">{{ stats.total_documents }}</div>
+      </div>
+    </div>
+
+    <!-- Stat Card 2: Completed -->
+    <div class="glass-panel p-5 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm flex items-center gap-4">
+      <div class="p-3 bg-accent-emerald/10 text-accent-emerald rounded-xl">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <div>
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Processed</div>
+        <div id="stat-completed" class="text-xl font-bold text-slate-700 dark:text-slate-200 mt-0.5">{{ stats.completed }}</div>
+      </div>
+    </div>
+
+    <!-- Stat Card 3: Failed -->
+    <div class="glass-panel p-5 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm flex items-center gap-4">
+      <div class="p-3 bg-accent-rose/10 text-accent-rose rounded-xl">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+      <div>
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Failed</div>
+        <div id="stat-failed" class="text-xl font-bold text-slate-700 dark:text-slate-200 mt-0.5">{{ stats.failed }}</div>
+      </div>
+    </div>
+
+    <!-- Stat Card 4: Fraud -->
+    <div class="glass-panel p-5 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm flex items-center gap-4">
+      <div class="p-3 bg-accent-amber/10 text-accent-amber rounded-xl">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      </div>
+      <div>
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fraud Alerts</div>
+        <div id="stat-fraud" class="text-xl font-bold text-slate-700 dark:text-slate-200 mt-0.5">{{ stats.fraud_alerts }}</div>
+      </div>
+    </div>
+
+    <!-- Stat Card 5: Accuracy -->
+    <div class="glass-panel p-5 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm flex items-center gap-4">
+      <div class="p-3 bg-accent-violet/10 text-accent-violet rounded-xl">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div>
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avg Accuracy</div>
+        <div id="stat-accuracy" class="text-xl font-bold text-slate-700 dark:text-slate-200 mt-0.5">{{ stats.accuracy_score }}%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Area & Quick workflow guide -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Drag & Drop Uploader -->
+    <div class="lg:col-span-2 glass-panel p-6 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm">
+      <h2 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">Upload Documents</h2>
+      
+      <div id="dropzone" class="border-2 border-dashed border-slate-200 dark:border-dark-800 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl p-8 text-center cursor-pointer transition-all duration-200 bg-slate-100/10 dark:bg-dark-900/10">
+        <input type="file" id="file-input" multiple class="hidden" accept=".pdf,.png,.jpg,.jpeg,.tiff">
+        
+        <svg class="w-12 h-12 mx-auto text-slate-300 dark:text-dark-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">Drag & Drop files here, or <span class="text-brand-500 underline">browse computer</span></p>
+        <p class="text-[10px] text-slate-400 mt-1.5">Supports PDF, PNG, JPG, JPEG, TIFF (up to 25MB)</p>
+      </div>
+
+      <!-- Selected Files Preview List -->
+      <div id="upload-progress-container" class="mt-4 space-y-2 hidden">
+        <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Queueing Uploads...</h3>
+        <div id="upload-items-list" class="space-y-1.5 max-h-36 overflow-y-auto pr-1"></div>
+      </div>
+    </div>
+
+    <!-- Active Extraction Rules Card -->
+    <div class="glass-panel p-6 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm h-fit">
+      <h2 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">AI Workflow Profile</h2>
+      <p class="text-[11px] text-slate-400">Documents uploaded will automatically be routed based on file contents, or processed via the active template selected.</p>
+      
+      <div class="mt-4 space-y-2">
+        {% for wf in workflows %}
+        <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/40 dark:border-dark-800/40 bg-white/30 dark:bg-dark-900/30">
+          <div class="min-w-0">
+            <div class="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">{{ wf.name }}</div>
+            <div class="text-[9px] text-slate-400 uppercase tracking-wider font-semibold">{{ wf.document_type }}</div>
+          </div>
+          <span class="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-brand-500/10 text-brand-500">Active</span>
+        </div>
+        {% empty %}
+        <div class="text-center py-4 text-xs text-slate-400 dark:text-dark-500 border border-dashed border-slate-200/50 dark:border-dark-800/50 rounded-xl">
+          No custom workflows configured yet. Default templates will be created automatically.
+        </div>
+        {% endfor %}
+      </div>
+      <a href="{% url 'documents:workflow_list' %}" class="w-full mt-4 flex items-center justify-center gap-1.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-900 dark:hover:bg-dark-800 text-xs font-bold rounded-xl text-brand-500 transition-all border border-slate-200/30 dark:border-dark-800/30">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+        Configure Extraction Workflows
+      </a>
+    </div>
+  </div>
+
+  <!-- Document Processing Table Grid -->
+  <div class="glass-panel p-6 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm">
+    <h2 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">Workspace Documents</h2>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-slate-200/50 dark:border-dark-800/50 text-slate-400 font-semibold uppercase tracking-wider">
+            <th class="pb-3 font-semibold">Document Name</th>
+            <th class="pb-3 font-semibold">Workflow</th>
+            <th class="pb-3 font-semibold">AI Extraction Status</th>
+            <th class="pb-3 font-semibold">Confidence</th>
+            <th class="pb-3 font-semibold">Fraud Risk</th>
+            <th class="pb-3 font-semibold">Date Uploaded</th>
+            <th class="pb-3 font-semibold text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="document-table-body" class="divide-y divide-slate-100 dark:divide-dark-800/30">
+          {% for doc in documents %}
+          <tr id="doc-row-{{ doc.id }}" class="text-slate-700 dark:text-slate-300">
+            <!-- Doc Name -->
+            <td class="py-4 font-semibold max-w-xs truncate" title="{{ doc.name }}">
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                <span>{{ doc.name }}</span>
+              </div>
+            </td>
+            <!-- Workflow Name -->
+            <td class="py-4 text-slate-400 font-medium">
+              {{ doc.workflow.name|default:"Auto-Detecting..." }}
+            </td>
+            <!-- Extraction Status Badge -->
+            <td class="py-4 status-cell">
+              <span class="px-2 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wide
+                {% if doc.status == 'completed' %}bg-emerald-500/10 text-emerald-500
+                {% elif doc.status == 'human_review' %}bg-accent-violet/10 text-accent-violet
+                {% elif doc.status == 'failed' %}bg-rose-500/10 text-rose-500
+                {% else %}bg-brand-500/10 text-brand-500 animate-pulse{% endif %}">
+                {{ doc.get_status_display }}
+              </span>
+            </td>
+            <!-- Confidence Score -->
+            <td class="py-4 confidence-cell font-bold">
+              {% if doc.status == 'completed' or doc.status == 'human_review' %}
+                {% if doc.confidence_score >= 0.90 %}
+                  <span class="text-emerald-500">{{ doc.confidence_score|stringformat:".2f" }}</span>
+                {% elif doc.confidence_score >= 0.75 %}
+                  <span class="text-accent-amber">{{ doc.confidence_score|stringformat:".2f" }}</span>
+                {% else %}
+                  <span class="text-rose-500">{{ doc.confidence_score|stringformat:".2f" }}</span>
+                {% endif %}
+              {% else %}
+                <span class="text-slate-400">-</span>
+              {% endif %}
+            </td>
+            <!-- Fraud Risk -->
+            <td class="py-4 fraud-cell font-medium">
+              {% if doc.status == 'completed' or doc.status == 'human_review' %}
+                <span class="px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-wide
+                  {% if doc.fraud_status == 'passed' %}bg-emerald-500/10 text-emerald-500
+                  {% elif doc.fraud_status == 'review' %}bg-accent-amber/10 text-accent-amber
+                  {% else %}bg-rose-500/10 text-rose-500{% endif %}">
+                  {{ doc.get_fraud_status_display }}
+                </span>
+              {% else %}
+                <span class="text-slate-400">-</span>
+              {% endif %}
+            </td>
+            <!-- Date Uploaded -->
+            <td class="py-4 text-slate-400 dark:text-dark-500">
+              {{ doc.created_at|date:"M d, Y H:i" }}
+            </td>
+            <!-- Actions -->
+            <td class="py-4 text-right action-cell">
+              {% if doc.status == 'human_review' or doc.status == 'completed' %}
+              <div class="flex items-center justify-end gap-2.5">
+                <a href="{% url 'documents:review_detail' doc.id %}" class="px-2.5 py-1 bg-brand-500/10 hover:bg-brand-500 text-brand-600 hover:text-white rounded-lg text-[10px] font-bold uppercase transition-all tracking-wide">
+                  Review Data
+                </a>
+              </div>
+              {% elif doc.status == 'failed' %}
+              <span class="text-slate-400 text-[10px]">Processing Failed</span>
+              {% else %}
+              <div class="flex items-center justify-end gap-1.5 text-slate-400">
+                <svg class="animate-spin h-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-[10px] font-medium">Extracting...</span>
+              </div>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr id="no-docs-row">
+            <td colspan="7" class="py-12 text-center text-xs text-slate-400 dark:text-dark-500">
+              <svg class="w-10 h-10 mx-auto text-slate-300 dark:text-dark-700 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              No documents in this workspace. Try uploading files above.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Setup Uploader Drag & Drop triggers
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('file-input');
+  const progressContainer = document.getElementById('upload-progress-container');
+  const itemsList = document.getElementById('upload-items-list');
+
+  dropzone.addEventListener('click', () => fileInput.click());
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('border-brand-500', 'bg-brand-500/5');
+  });
+
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('border-brand-500', 'bg-brand-500/5');
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('border-brand-500', 'bg-brand-500/5');
+    if (e.dataTransfer.files.length > 0) {
+      handleFilesUpload(e.dataTransfer.files);
+    }
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length > 0) {
+      handleFilesUpload(fileInput.files);
+    }
+  });
+
+  // Handle batch asynchronous file uploads
+  function handleFilesUpload(files) {
+    progressContainer.classList.remove('hidden');
+    
+    // Remove "No documents" row placeholder if it exists
+    const noDocsRow = document.getElementById('no-docs-row');
+    if (noDocsRow) noDocsRow.remove();
+
+    Array.from(files).forEach(file => {
+      const itemId = 'upload-item-' + Math.random().toString(36).substring(2, 9);
+      
+      // Create listing element in uploader previews
+      const itemEl = document.createElement('div');
+      itemEl.id = itemId;
+      itemEl.className = "flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-dark-900 border border-slate-200/50 dark:border-dark-800/50 text-[11px]";
+      itemEl.innerHTML = `
+        <div class="flex items-center gap-2 truncate">
+          <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span class="font-medium text-slate-700 dark:text-slate-300 truncate">${file.name}</span>
+        </div>
+        <div class="flex items-center gap-1.5 text-slate-400 font-semibold" id="${itemId}-status">
+          <span>Uploading...</span>
+        </div>
+      `;
+      itemsList.appendChild(itemEl);
+
+      // Perform AJAX upload POST
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '{% url "documents:upload" %}', true);
+      
+      xhr.onload = function() {
+        if (xhr.status === 201) {
+          const res = JSON.parse(xhr.responseText);
+          document.getElementById(itemId + '-status').innerHTML = `
+            <span class="text-emerald-500 font-bold">Uploaded</span>
+            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          `;
+          // Create temporary table row with spinner
+          appendDocumentRow(res.document);
+          setTimeout(() => itemEl.remove(), 2000);
+        } else {
+          document.getElementById(itemId + '-status').innerHTML = `
+            <span class="text-rose-500 font-bold">Failed</span>
+            <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          `;
+        }
+      };
+
+      xhr.send(formData);
+    });
+  }
+
+  function appendDocumentRow(doc) {
+    // If row already exists, don't re-add
+    if (document.getElementById(`doc-row-${doc.id}`)) return;
+
+    const tbody = document.getElementById('document-table-body');
+    const tr = document.createElement('tr');
+    tr.id = `doc-row-${doc.id}`;
+    tr.className = "text-slate-700 dark:text-slate-300 animate-slide-up border-b border-slate-100 dark:border-dark-800/10";
+    tr.innerHTML = `
+      <td class="py-4 font-semibold max-w-xs truncate" title="${doc.name}">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          <span>${doc.name}</span>
+        </div>
+      </td>
+      <td class="py-4 text-slate-400 font-medium">Auto-Detecting...</td>
+      <td class="py-4 status-cell">
+        <span class="px-2 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wide bg-brand-500/10 text-brand-500 animate-pulse">
+          Pending
+        </span>
+      </td>
+      <td class="py-4 confidence-cell font-bold"><span class="text-slate-400">-</span></td>
+      <td class="py-4 fraud-cell font-medium"><span class="text-slate-400">-</span></td>
+      <td class="py-4 text-slate-400 dark:text-dark-500">Just Now</td>
+      <td class="py-4 text-right action-cell">
+        <div class="flex items-center justify-end gap-1.5 text-slate-400">
+          <svg class="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-[10px] font-medium">Extracting...</span>
+        </div>
+      </td>
+    `;
+    tbody.insertBefore(tr, tbody.firstChild);
+
+    // Increment Total Docs stat
+    const totalEl = document.getElementById('stat-total');
+    totalEl.innerText = parseInt(totalEl.innerText) + 1;
+  }
+
+  // Setup WebSocket connection for dynamic processing updates
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  const wsUrl = wsProtocol + window.location.host + '/ws/documents/{{ active_workspace.id }}/';
+  
+  function connectWebSocket() {
+    const ws = new WebSocket(wsUrl);
+
+    ws.onmessage = function(e) {
+      const data = JSON.parse(e.data);
+      if (data.event === 'document.processed') {
+        updateTableRow(data);
+      }
+    };
+
+    ws.onclose = function() {
+      // Reconnect in 3 seconds if disconnected
+      setTimeout(connectWebSocket, 3000);
+    };
+  }
+
+  function updateTableRow(data) {
+    const tr = document.getElementById(`doc-row-${data.document_id}`);
+    if (!tr) return;
+
+    // Update Status Cell
+    const statusCell = tr.querySelector('.status-cell');
+    let statusClass = "bg-brand-500/10 text-brand-500 animate-pulse";
+    let statusText = data.status;
+    
+    if (data.status === 'completed') {
+      statusClass = "bg-emerald-500/10 text-emerald-500";
+      statusText = "Completed";
+      // Increment processed count
+      const processedEl = document.getElementById('stat-completed');
+      processedEl.innerText = parseInt(processedEl.innerText) + 1;
+    } else if (data.status === 'human_review') {
+      statusClass = "bg-accent-violet/10 text-accent-violet";
+      statusText = "Human Review";
+    } else if (data.status === 'failed') {
+      statusClass = "bg-rose-500/10 text-rose-500";
+      statusText = "Failed";
+      // Increment failed count
+      const failedEl = document.getElementById('stat-failed');
+      failedEl.innerText = parseInt(failedEl.innerText) + 1;
+    }
+    
+    statusCell.innerHTML = `<span class="px-2 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wide ${statusClass}">${statusText}</span>`;
+
+    // Update Confidence Cell
+    const confidenceCell = tr.querySelector('.confidence-cell');
+    let confidenceClass = "text-slate-400";
+    let confidenceVal = "-";
+    if (data.status === 'completed' || data.status === 'human_review') {
+      confidenceVal = parseFloat(data.confidence_score).toFixed(2);
+      if (data.confidence_score >= 0.90) confidenceClass = "text-emerald-500";
+      else if (data.confidence_score >= 0.75) confidenceClass = "text-accent-amber";
+      else confidenceClass = "text-rose-500";
+    }
+    confidenceCell.innerHTML = `<span class="${confidenceClass}">${confidenceVal}</span>`;
+
+    // Update Fraud Cell
+    const fraudCell = tr.querySelector('.fraud-cell');
+    let fraudClass = "text-slate-400";
+    let fraudText = "-";
+    if (data.status === 'completed' || data.status === 'human_review') {
+      fraudText = data.fraud_status === 'passed' ? 'Passed' : (data.fraud_status === 'review' ? 'Needs Review' : 'Flagged');
+      if (data.fraud_status === 'passed') {
+        fraudClass = "bg-emerald-500/10 text-emerald-500";
+      } else if (data.fraud_status === 'review') {
+        fraudClass = "bg-accent-amber/10 text-accent-amber";
+        // Increment fraud counts
+        const fraudEl = document.getElementById('stat-fraud');
+        fraudEl.innerText = parseInt(fraudEl.innerText) + 1;
+      } else {
+        fraudClass = "bg-rose-500/10 text-rose-500";
+        const fraudEl = document.getElementById('stat-fraud');
+        fraudEl.innerText = parseInt(fraudEl.innerText) + 1;
+      }
+      fraudCell.innerHTML = `<span class="px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-wide ${fraudClass}">${fraudText}</span>`;
+    } else {
+      fraudCell.innerHTML = `<span>-</span>`;
+    }
+
+    // Update Action Cell
+    const actionCell = tr.querySelector('.action-cell');
+    if (data.status === 'human_review' || data.status === 'completed') {
+      // Create link URL dynamically
+      const reviewUrl = `/documents/${data.document_id}/review/`;
+      actionCell.innerHTML = `
+        <div class="flex items-center justify-end gap-2.5">
+          <a href="${reviewUrl}" class="px-2.5 py-1 bg-brand-500/10 hover:bg-brand-500 text-brand-600 hover:text-white rounded-lg text-[10px] font-bold uppercase transition-all tracking-wide">
+            Review Data
+          </a>
+        </div>
+      `;
+    } else if (data.status === 'failed') {
+      actionCell.innerHTML = `<span class="text-slate-400 text-[10px]">Processing Failed</span>`;
+    }
+  }
+
+  // Connect WebSockets when page loads
+  connectWebSocket();
+</script>
+{% endblock %}

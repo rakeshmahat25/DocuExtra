@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Search Results - DocuOCR{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-6xl mx-auto animate-fade-in">
+  
+  <div>
+    <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Global Text Search</h1>
+    <p class="text-xs text-slate-400 dark:text-dark-500 mt-1">Search terms and strings across files metadata, PDF text layers, and JSON extractions.</p>
+  </div>
+
+  <!-- Search Input Bar -->
+  <div class="glass-panel p-6 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm">
+    <form method="get" class="flex gap-3">
+      <input type="text" 
+             name="q" 
+             value="{{ query }}" 
+             required
+             placeholder="Search invoice numbers, vendor names, values, raw PDF contents..." 
+             class="w-full px-4 py-3 text-sm rounded-xl bg-white/70 border border-slate-200 focus:border-brand-500 focus:outline-none dark:bg-dark-900/60 dark:border-dark-700 dark:focus:border-brand-500 transition-all text-slate-700 dark:text-slate-200">
+      <button type="submit" class="px-6 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs font-semibold rounded-xl transition-all shadow-md shadow-brand-500/10">
+        Search
+      </button>
+    </form>
+  </div>
+
+  <!-- Results Table -->
+  {% if query %}
+  <div class="glass-panel p-6 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-sm">
+    <h2 class="text-xs font-bold text-slate-400 dark:text-dark-500 uppercase tracking-wider mb-4">Matches for "{{ query }}" ({{ results|length }} found)</h2>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-slate-200/50 dark:border-dark-800/50 text-slate-400 font-semibold uppercase tracking-wider">
+            <th class="pb-3 font-semibold">Document Name</th>
+            <th class="pb-3 font-semibold">Workflow</th>
+            <th class="pb-3 font-semibold">Processing Status</th>
+            <th class="pb-3 font-semibold">Confidence</th>
+            <th class="pb-3 font-semibold text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-dark-800/30">
+          {% for doc in results %}
+          <tr class="text-slate-700 dark:text-slate-300">
+            <td class="py-4 font-semibold max-w-sm truncate" title="{{ doc.name }}">
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                <span>{{ doc.name }}</span>
+              </div>
+            </td>
+            <td class="py-4 text-slate-400 font-medium">{{ doc.workflow.name }}</td>
+            <td class="py-4">
+              <span class="px-2 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wide
+                {% if doc.status == 'completed' %}bg-emerald-500/10 text-emerald-500
+                {% elif doc.status == 'human_review' %}bg-accent-violet/10 text-accent-violet
+                {% elif doc.status == 'failed' %}bg-rose-500/10 text-rose-500
+                {% else %}bg-brand-500/10 text-brand-500 animate-pulse{% endif %}">
+                {{ doc.get_status_display }}
+              </span>
+            </td>
+            <td class="py-4 font-bold">
+              {% if doc.status == 'completed' or doc.status == 'human_review' %}
+              <span class="{% if doc.confidence_score >= 0.90 %}text-emerald-500{% else %}text-accent-amber{% endif %}">
+                {% widthratio doc.confidence_score 1 100 %}%
+              </span>
+              {% else %}
+              <span class="text-slate-400">-</span>
+              {% endif %}
+            </td>
+            <td class="py-4 text-right">
+              {% if doc.status == 'completed' or doc.status == 'human_review' %}
+              <a href="{% url 'documents:review_detail' doc.id %}" class="px-2.5 py-1 bg-brand-500/10 hover:bg-brand-500 text-brand-600 hover:text-white rounded-lg text-[10px] font-bold uppercase transition-all tracking-wide">
+                View Data
+              </a>
+              {% else %}
+              <span class="text-slate-400">-</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="py-6 text-center text-slate-400">No documents found matching the search criteria. Try modifying your keywords.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

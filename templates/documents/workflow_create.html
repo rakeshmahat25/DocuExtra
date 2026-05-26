@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %}Create AI Workflow - DocuOCR{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto glass-panel p-8 rounded-2xl border border-slate-200/50 dark:border-dark-800/50 shadow-xl animate-fade-in">
+  
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Configure AI Workflow</h1>
+    <p class="text-xs text-slate-400 dark:text-dark-500 mt-1">Build a structured schema mapping to instruct the Vision-Language Model on what fields to extract and validate.</p>
+  </div>
+
+  <!-- Pre-configured Quick Templates -->
+  <div class="mb-6 p-4 rounded-xl bg-slate-100/50 dark:bg-dark-900/50 border border-slate-200/20">
+    <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">Quick-Start Templates</h3>
+    <div class="flex flex-wrap gap-2.5">
+      <button type="button" onclick="loadTemplate('invoice')" class="px-3.5 py-2 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-xs font-semibold rounded-lg hover:border-brand-500 dark:hover:border-brand-500 transition-all text-slate-700 dark:text-slate-200 flex items-center gap-1.5 shadow-sm">
+        <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Commercial Invoice
+      </button>
+      <button type="button" onclick="loadTemplate('kyc')" class="px-3.5 py-2 bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 text-xs font-semibold rounded-lg hover:border-brand-500 dark:hover:border-brand-500 transition-all text-slate-700 dark:text-slate-200 flex items-center gap-1.5 shadow-sm">
+        <svg class="w-4 h-4 text-accent-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 014 0m-7 8a2 2 0 100-4 2 2 0 000 4zm7.5 1a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0z"/></svg>
+        KYC ID Verification
+      </button>
+    </div>
+  </div>
+
+  <form method="post" class="space-y-6">
+    {% csrf_token %}
+    
+    <!-- Meta Fields -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div>
+        <label for="name" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Workflow Name</label>
+        <input type="text" name="name" id="name" required placeholder="e.g. Finance Invoices, Operations IDs" class="w-full px-4 py-2.5 text-sm rounded-xl bg-white/70 border border-slate-200 focus:border-brand-500 focus:outline-none dark:bg-dark-900/60 dark:border-dark-700 dark:focus:border-brand-500 transition-all text-slate-700 dark:text-slate-200">
+      </div>
+
+      <div>
+        <label for="document_type" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Document Type Classifier</label>
+        <select name="document_type" id="document_type" required class="w-full px-4 py-2.5 text-sm rounded-xl bg-white/70 border border-slate-200 focus:border-brand-500 focus:outline-none dark:bg-dark-900/60 dark:border-dark-700 dark:focus:border-brand-500 transition-all text-slate-700 dark:text-slate-200">
+          <option value="invoice">Commercial Invoice</option>
+          <option value="receipt">Retail Receipt</option>
+          <option value="kyc_id">Identity Document / KYC ID</option>
+          <option value="bank_statement">Financial Bank Statement</option>
+          <option value="medical">Medical Record / Prescription</option>
+          <option value="custom">Custom Document Layout</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- System Prompt Override -->
+    <div>
+      <label for="system_prompt_override" class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">AI Extraction Instructions (Custom Prompt Context)</label>
+      <textarea name="system_prompt_override" id="system_prompt_override" rows="3" placeholder="Provide instructions to the LLM (e.g. 'Extract company tax IDs. Format phone numbers with country code. Return totals in USD.')" class="w-full px-4 py-2.5 text-sm rounded-xl bg-white/70 border border-slate-200 focus:border-brand-500 focus:outline-none dark:bg-dark-900/60 dark:border-dark-700 dark:focus:border-brand-500 transition-all text-slate-700 dark:text-slate-200"></textarea>
+    </div>
+
+    <!-- Dynamic Schema Fields List -->
+    <div class="border-t border-slate-200/40 dark:border-dark-800/40 pt-5">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Extraction Fields Schema</h2>
+        <button type="button" onclick="addField()" class="flex items-center gap-1 py-1.5 px-3 border border-slate-200 dark:border-dark-850 hover:border-brand-500 rounded-lg text-xs font-semibold text-brand-500 hover:bg-brand-500/5 transition-all">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Add Field
+        </button>
+      </div>
+
+      <div class="space-y-3" id="fields-container">
+        <!-- Rendered JS item rows here -->
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-end gap-3 border-t border-slate-200/40 dark:border-dark-800/40 pt-5">
+      <a href="{% url 'documents:workflow_list' %}" class="px-4 py-2.5 border border-slate-200 dark:border-dark-700 text-xs font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-dark-800 transition-all text-slate-700 dark:text-slate-300">Cancel</a>
+      <button type="submit" class="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-xs font-semibold text-white rounded-xl transition-all shadow-md shadow-brand-500/10">
+        Save AI Workflow
+      </button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let fieldIndex = 0;
+
+  function addField(key = '', label = '', type = 'text', required = true) {
+    const container = document.getElementById('fields-container');
+    const row = document.createElement('div');
+    row.id = `field-row-${fieldIndex}`;
+    row.className = "flex flex-col md:flex-row items-start md:items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-dark-900 border border-slate-200/50 dark:border-dark-800/50 animate-slide-up relative group";
+    
+    row.innerHTML = `
+      <div class="flex-1 w-full grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div>
+          <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1">Field Key (JSON variable)</label>
+          <input type="text" name="field_key[]" value="${key}" required placeholder="invoice_number" class="w-full px-3 py-1.5 text-xs rounded-lg bg-white border border-slate-200 dark:bg-dark-800 dark:border-dark-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-brand-500">
+        </div>
+        
+        <div>
+          <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1">Display Label (UI form)</label>
+          <input type="text" name="field_label[]" value="${label}" required placeholder="Invoice Number" class="w-full px-3 py-1.5 text-xs rounded-lg bg-white border border-slate-200 dark:bg-dark-800 dark:border-dark-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-brand-500">
+        </div>
+
+        <div>
+          <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1">Data Format</label>
+          <select name="field_type[]" class="w-full px-3 py-1.5 text-xs rounded-lg bg-white border border-slate-200 dark:bg-dark-800 dark:border-dark-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-brand-500">
+            <option value="text" ${type === 'text' ? 'selected' : ''}>Text / String</option>
+            <option value="number" ${type === 'number' ? 'selected' : ''}>Number / Currency</option>
+            <option value="date" ${type === 'date' ? 'selected' : ''}>Calendar Date</option>
+            <option value="boolean" ${type === 'boolean' ? 'selected' : ''}>Boolean (Stamp/Check)</option>
+            <option value="table" ${type === 'table' ? 'selected' : ''}>Table / Items List</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 self-end md:self-center mt-3 md:mt-0">
+        <label class="flex items-center gap-1.5 cursor-pointer text-xs select-none">
+          <input type="checkbox" name="field_required[]" value="${fieldIndex}" ${required ? 'checked' : ''} class="w-3.5 h-3.5 text-brand-500 rounded border-slate-300 focus:ring-brand-500">
+          <span class="text-[10px] font-semibold text-slate-400">Required</span>
+        </label>
+        
+        <button type="button" onclick="removeField(${fieldIndex})" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </div>
+    `;
+
+    container.appendChild(row);
+    fieldIndex++;
+  }
+
+  function removeField(idx) {
+    const row = document.getElementById(`field-row-${idx}`);
+    if (row) row.remove();
+  }
+
+  // Pre-configured B2B workflows definitions
+  const templates = {
+    invoice: {
+      name: "Acme Accounts Payable Invoice",
+      type: "invoice",
+      prompt: "Extract billing items list, currency symbols, validation notes, and signature presence confirmation.",
+      fields: [
+        { key: 'invoice_number', label: 'Invoice Number', type: 'text', req: true },
+        { key: 'vendor_name', label: 'Vendor Company Name', type: 'text', req: true },
+        { key: 'invoice_date', label: 'Invoice Date', type: 'date', req: true },
+        { key: 'subtotal', label: 'Subtotal Amount', type: 'number', req: true },
+        { key: 'tax_amount', label: 'Tax / VAT Amount', type: 'number', req: false },
+        { key: 'total_amount', label: 'Total Due Amount', type: 'number', req: true },
+        { key: 'due_date', label: 'Due Payment Date', type: 'date', req: true }
+      ]
+    },
+    kyc: {
+      name: "B2B Customer KYC Passport ID",
+      type: "kyc_id",
+      prompt: "Check and confirm that the document hasn't expired. Validate signature and photo presence.",
+      fields: [
+        { key: 'document_number', label: 'Passport/ID Number', type: 'text', req: true },
+        { key: 'full_name', label: 'Customer Full Name', type: 'text', req: true },
+        { key: 'date_of_birth', label: 'Date of Birth', type: 'date', req: true },
+        { key: 'nationality', label: 'Issuing Country / Nationality', type: 'text', req: true },
+        { key: 'expiry_date', label: 'Expiration Date', type: 'date', req: true }
+      ]
+    }
+  };
+
+  function loadTemplate(tplKey) {
+    const tpl = templates[tplKey];
+    if (!tpl) return;
+
+    // Set name and type
+    document.getElementById('name').value = tpl.name;
+    document.getElementById('document_type').value = tpl.type;
+    document.getElementById('system_prompt_override').value = tpl.prompt;
+
+    // Reset container
+    const container = document.getElementById('fields-container');
+    container.innerHTML = '';
+    fieldIndex = 0;
+
+    // Load fields
+    tpl.fields.forEach(f => {
+      addField(f.key, f.label, f.type, f.req);
+    });
+  }
+
+  // Load default invoice template on open
+  loadTemplate('invoice');
+</script>
+{% endblock %}
